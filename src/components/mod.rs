@@ -1,3 +1,5 @@
+mod text_editor;
+
 use crossterm::event::Event;
 use tui::backend::Backend;
 use tui::Frame;
