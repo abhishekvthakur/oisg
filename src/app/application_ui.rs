@@ -2,7 +2,10 @@ use crossterm::event::Event;
 use tui::backend::Backend;
 use tui::Frame;
 use tui::layout::Rect;
-use crate::components::{BaseComponent, DrawableComponent};
+
+use crate::components::{
+    BaseComponent, DrawableComponent
+};
 
 pub struct ApplicationUI {}
 
@@ -14,7 +17,7 @@ impl ApplicationUI {
 
 impl BaseComponent for ApplicationUI {
     fn event(&mut self, event: Event) -> Result<bool, ()> {
-        Ok(true)
+        Ok(false)
     }
 }
 

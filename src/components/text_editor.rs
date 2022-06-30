@@ -88,7 +88,7 @@ impl TextEditor {
         false
     }
 
-    fn next_char_pos(&self) -> Option<usize> {
+    pub fn next_char_pos(&self) -> Option<usize> {
         if self.cur_pos == self.text.len() {
             return None;
         }

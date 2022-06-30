@@ -1,5 +1,6 @@
 mod components;
 mod app;
+mod styles;
 
 use std::error::Error;
 use std::io;

@@ -1,13 +1,8 @@
 use crossterm::event::{
     Event, KeyCode, KeyModifiers
 };
-use tui::backend::Backend;
-use tui::Frame;
-use tui::layout::Rect;
 use crate::app::application_ui::ApplicationUI;
-use crate::components::{
-    BaseComponent, DrawableComponent
-};
+use crate::components::BaseComponent;
 
 pub struct Application {
     ui: ApplicationUI,
