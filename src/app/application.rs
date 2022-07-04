@@ -1,8 +1,11 @@
 use crossterm::event::{
     Event, KeyCode, KeyModifiers
 };
+use tui::backend::Backend;
+use tui::Frame;
+use tui::layout::Rect;
 use crate::app::application_ui::ApplicationUI;
-use crate::components::BaseComponent;
+use crate::components::{ BaseComponent, DrawableComponent };
 
 pub struct Application {
     ui: ApplicationUI,
@@ -35,5 +38,11 @@ impl BaseComponent for Application {
         }
 
         Ok(true)
+    }
+}
+
+impl DrawableComponent for Application {
+    fn draw<B: Backend>(&mut self, f: &mut Frame<B>, area: Rect) {
+        self.ui.draw(f, area);
     }
 }

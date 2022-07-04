@@ -1,6 +1,7 @@
 mod components;
 mod app;
 mod styles;
+mod common;
 
 use std::error::Error;
 use std::io;
@@ -19,7 +20,7 @@ use tui::{
     backend::CrosstermBackend,
     terminal::Terminal
 };
-use crate::components::BaseComponent;
+use crate::components::{BaseComponent, DrawableComponent};
 
 fn main() -> Result<(), Box<dyn Error>> {
     // setup terminal for drawing
@@ -38,6 +39,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let tick_rate = Duration::from_millis(200);
     let last_tick = Instant::now();
 
+    terminal.draw(|f| application.draw(f, f.size()))?;
+
     // wait for use to press any key
     loop {
         let timeout = tick_rate
@@ -46,7 +49,12 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         if event::poll(timeout)? {
             // just let application consume the event
-            let _ = application.event(event::read()?);
+            match application.event(event::read()?) {
+                Ok(consumed) if consumed => {
+                    terminal.draw(|f| application.draw(f, f.size()))?;
+                }
+                _ => {}
+            }
         }
 
         if application.is_quit() {

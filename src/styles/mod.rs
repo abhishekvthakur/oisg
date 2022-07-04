@@ -4,8 +4,8 @@ use tui::style::{
 
 pub fn cursor_style() -> Style {
     Style::default()
-        .fg(Color::White)
-        .bg(Color::Black)
+        .fg(Color::Black)
+        .bg(Color::White)
 }
 
 pub fn placeholder_style() -> Style {

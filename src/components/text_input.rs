@@ -37,12 +37,25 @@ impl TextInput {
         }
     }
 
+    pub fn with(text: String, placeholder: String) -> Self {
+        TextInput {
+            editor: TextEditor::from(text),
+            placeholder,
+            focus: false,
+        }
+    }
+
     fn default_placeholder() -> String {
         String::from("type something...")
     }
 
     pub fn get_text(&self) -> &str {
         self.editor.text.as_str()
+    }
+
+    pub fn clear(&mut self) {
+        self.editor.text.clear();
+        self.editor.cur_pos = 0;
     }
 
     fn get_draw_text(&self) -> Option<Vec<Span>> {
@@ -62,11 +75,11 @@ impl TextInput {
                 self.editor.text[self.editor.cur_pos..pos].to_owned()
             });
 
-        if self.focus {
-            texts.push(Span::styled(cursor_text, styles::cursor_style()));
+        texts.push(Span::styled(cursor_text, styles::cursor_style()));
+        /*if self.focus {
         } else {
             texts.push(Span::raw(cursor_text));
-        }
+        }*/
 
         // add remaining text, if any
         if let Some(pos) = self.editor.next_char_pos() {
@@ -99,9 +112,6 @@ impl BaseComponent for TextInput {
 
 impl DrawableComponent for TextInput {
     fn draw<B: Backend>(&mut self, f: &mut Frame<B>, area: Rect) {
-        let block = Block::default()
-            .borders(Borders::NONE);
-
         let paragraph = match self.get_draw_text() {
             Some(texts) => {
                 Paragraph::new(Spans::from(texts))
@@ -112,7 +122,7 @@ impl DrawableComponent for TextInput {
                     styles::placeholder_style()
                 ))
             }
-        }.block(block);
+        };
 
         f.render_widget(paragraph, area);
     }

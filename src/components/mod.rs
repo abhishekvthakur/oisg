@@ -1,5 +1,6 @@
 mod text_editor;
 pub mod text_input;
+pub mod user_registration;
 
 use crossterm::event::Event;
 use tui::backend::Backend;

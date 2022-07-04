@@ -4,25 +4,30 @@ use tui::Frame;
 use tui::layout::Rect;
 
 use crate::components::{
-    BaseComponent, DrawableComponent
+    BaseComponent, DrawableComponent,
+    user_registration::UserRegistration
 };
 
-pub struct ApplicationUI {}
+pub struct ApplicationUI {
+    user_reg: UserRegistration
+}
 
 impl ApplicationUI {
     pub fn new() -> Self {
-        ApplicationUI {}
+        ApplicationUI {
+            user_reg: UserRegistration::new()
+        }
     }
 }
 
 impl BaseComponent for ApplicationUI {
     fn event(&mut self, event: Event) -> Result<bool, ()> {
-        Ok(false)
+        self.user_reg.event(event)
     }
 }
 
 impl DrawableComponent for ApplicationUI {
     fn draw<B: Backend>(&mut self, f: &mut Frame<B>, area: Rect) {
-        todo!()
+        self.user_reg.draw(f, area);
     }
 }
