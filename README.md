@@ -11,5 +11,7 @@ Things to done
   - [x] : Create component text editor (a non drawable component)
   - [x] : Create component text input
   - [x] : Create user registration screen
-  - [ ] : Add sqlite support for storing user details and other data locally
+  - [@] : Add sqlite support for storing user details and other data locally
+  - [ ] : Add check if user has been registered on application start, if not registered display user_registration screen
+  - [ ] : Create components for chat functionality
 - [@] : Think next points...
