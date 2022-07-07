@@ -53,6 +53,10 @@ impl TextInput {
         self.editor.text.as_str()
     }
 
+    pub fn set_text(&mut self, text: String) {
+        self.editor.text = text;
+    }
+
     pub fn clear(&mut self) {
         self.editor.text.clear();
         self.editor.cur_pos = 0;
@@ -75,11 +79,7 @@ impl TextInput {
                 self.editor.text[self.editor.cur_pos..pos].to_owned()
             });
 
-        texts.push(Span::styled(cursor_text, styles::cursor_style()));
-        /*if self.focus {
-        } else {
-            texts.push(Span::raw(cursor_text));
-        }*/
+        texts.push(Span::styled(cursor_text, styles::cursor_style(self.focus)));
 
         // add remaining text, if any
         if let Some(pos) = self.editor.next_char_pos() {
@@ -115,12 +115,11 @@ impl DrawableComponent for TextInput {
         let paragraph = match self.get_draw_text() {
             Some(texts) => {
                 Paragraph::new(Spans::from(texts))
+                    .style(styles::input_style(self.focus, false))
             },
             None => {
-                Paragraph::new(Span::styled(
-                    self.placeholder.as_str(),
-                    styles::placeholder_style()
-                ))
+                Paragraph::new(Span::raw(self.placeholder.as_str()))
+                    .style(styles::input_style(self.focus, true))
             }
         };
 

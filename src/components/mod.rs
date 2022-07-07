@@ -1,8 +1,9 @@
 mod text_editor;
 pub mod text_input;
 pub mod user_registration;
+pub mod command;
 
-use crossterm::event::Event;
+use crossterm::event::{Event, KeyEvent};
 use tui::backend::Backend;
 use tui::Frame;
 use tui::layout::Rect;
@@ -31,4 +32,17 @@ pub trait DrawableComponent {
         f: &mut Frame<B>,
         area: Rect
     );
+
+    fn get_commands(&self) -> Vec<Command> {
+        vec![]
+    }
+
+    #[allow(unused)]
+    fn update_commands(&mut self, commands: Vec<Command>) {}
+}
+
+pub struct Command {
+    label: String,
+    shortcut: KeyEvent,
+    enable: bool,
 }
