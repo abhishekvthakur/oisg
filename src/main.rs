@@ -2,11 +2,14 @@ mod components;
 mod app;
 mod styles;
 mod common;
+mod constants;
+mod db;
 
-use std::error::Error;
-use std::io;
-use std::time::{ Duration, Instant };
-
+use std::{
+    error::Error,
+    io,
+    time::{ Duration, Instant }
+};
 use crossterm::{
     ExecutableCommand,
     terminal::{
@@ -15,12 +18,11 @@ use crossterm::{
     },
     event
 };
-
 use tui::{
     backend::CrosstermBackend,
     terminal::Terminal
 };
-use crate::components::{BaseComponent, DrawableComponent};
+use crate::components::{ BaseComponent, DrawableComponent };
 
 fn main() -> Result<(), Box<dyn Error>> {
     // setup terminal for drawing
@@ -32,6 +34,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut terminal = Terminal::new(backend)?;
     terminal.hide_cursor()?;
     terminal.clear()?;
+
+    if !db::is_db_exists()? {
+        db::create_db_file()?;
+        db::tables::create_all()?;
+    }
 
     // create application
     let mut application = app::application::Application::new();
@@ -48,7 +55,6 @@ fn main() -> Result<(), Box<dyn Error>> {
             .unwrap_or_else(|| Duration::from_millis(0));
 
         if event::poll(timeout)? {
-            // just let application consume the event
             match application.event(event::read()?) {
                 Ok(consumed) if consumed => {
                     terminal.draw(|f| application.draw(f, f.size()))?;

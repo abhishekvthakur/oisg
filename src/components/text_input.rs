@@ -3,7 +3,7 @@ use tui::backend::Backend;
 use tui::Frame;
 use tui::layout::Rect;
 use tui::text::{ Span, Spans };
-use tui::widgets::{ Block, Borders, Paragraph };
+use tui::widgets::{ Paragraph };
 use crate::components::{
     BaseComponent, DrawableComponent,
     text_editor::TextEditor

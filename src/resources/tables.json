@@ -1,0 +1,41 @@
+[
+  {
+    "name": "USER_INFO",
+    "columns": [
+      {
+        "name": "USERNAME",
+        "column_type": "VARCHAR(10)",
+        "constraints": [ "NOT NULL" ]
+      },
+      {
+        "name": "USER_NAME",
+        "column_type": "VARCHAR(50)",
+        "constraints": [ "NOT NULL" ]
+      },
+      {
+        "name": "JOINED_AT",
+        "column_type": "TIMESTAMP",
+        "constraints": [ "DEFAULT CURRENT_TIMESTAMP", "NOT NULL" ]
+      }
+    ]
+  },
+  {
+    "name": "MESSAGES",
+    "columns": [
+      {
+        "name": "FROM_USER",
+        "column_type": "VARCHAR(50)",
+        "constraints": [ "NOT NULL" ]
+      },
+      {
+        "name": "MESSAGE",
+        "column_type": "VARCHAR(255)"
+      },
+      {
+        "name": "RECEIVED_TIME",
+        "column_type": "TIMESTAMP",
+        "constraints": [ "DEFAULT CURRENT_TIMESTAMP", "NOT NULL" ]
+      }
+    ]
+  }
+]

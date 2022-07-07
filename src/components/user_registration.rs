@@ -1,4 +1,4 @@
-use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
+use crossterm::event::{Event, KeyCode, KeyModifiers};
 use tui::backend::Backend;
 use tui::Frame;
 use tui::layout::Rect;
@@ -56,7 +56,6 @@ impl BaseComponent for UserRegistration {
         }
 
         if let Event::Key(ke) = event {
-            let key_event = KeyEvent::new(KeyCode::Char('c'), KeyModifiers::CONTROL);
             match ke.code {
                 KeyCode::Char(c) if ke.modifiers.contains(KeyModifiers::CONTROL) => {
                     // TODO Remove hardcoding, map short keys
