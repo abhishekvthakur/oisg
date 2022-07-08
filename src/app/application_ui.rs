@@ -1,3 +1,4 @@
+use std::rc::Rc;
 use crossterm::event::Event;
 use tui::backend::Backend;
 use tui::Frame;
@@ -6,8 +7,10 @@ use tui::layout::{Constraint, Direction, Layout, Rect};
 use crate::components::{
     BaseComponent, DrawableComponent,
     user_registration::UserRegistration,
+    Command,
     command::CommandComponent,
 };
+use crate::common::command_keys::CommandKeys;
 
 pub struct ApplicationUI {
     command: CommandComponent,
@@ -15,10 +18,12 @@ pub struct ApplicationUI {
 }
 
 impl ApplicationUI {
-    pub fn new() -> Self {
+    pub fn new(
+        command_keys: Rc<CommandKeys>
+    ) -> Self {
         ApplicationUI {
             command: CommandComponent::new(),
-            user_reg: UserRegistration::new()
+            user_reg: UserRegistration::new(Rc::clone(&command_keys))
         }
     }
 }
@@ -41,7 +46,24 @@ impl DrawableComponent for ApplicationUI {
 
         self.user_reg.draw(f, layout[0]);
 
-        self.command.update_commands(self.user_reg.get_commands());
+        // TODO think something else, remove from draw, only
+        let mut commands = self.user_reg.get_commands();
+        commands.append(&mut self.get_commands());
+
+        self.command.update_commands(commands);
         self.command.draw(f, layout[1]);
+    }
+
+    // default commands for application
+    // like quit, help, etc
+    fn get_commands(&self) -> Vec<Command> {
+        let mut commands = Vec::new();
+
+        commands.push(Command {
+            label: "Quit [^c]".to_string(),
+            enable: true
+        });
+
+        commands
     }
 }

@@ -3,7 +3,7 @@ pub mod text_input;
 pub mod user_registration;
 pub mod command;
 
-use crossterm::event::{Event, KeyEvent};
+use crossterm::event::Event;
 use tui::backend::Backend;
 use tui::Frame;
 use tui::layout::Rect;
@@ -42,7 +42,6 @@ pub trait DrawableComponent {
 }
 
 pub struct Command {
-    label: String,
-    shortcut: KeyEvent,
-    enable: bool,
+    pub(crate) label: String,
+    pub(crate) enable: bool,
 }

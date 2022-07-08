@@ -1,21 +1,25 @@
-use crossterm::event::{
-    Event, KeyCode, KeyModifiers
-};
+use std::rc::Rc;
+use crossterm::event::Event;
 use tui::backend::Backend;
 use tui::Frame;
 use tui::layout::Rect;
 use crate::app::application_ui::ApplicationUI;
 use crate::components::{ BaseComponent, DrawableComponent };
+use crate::common::command_keys::CommandKeys;
 
 pub struct Application {
     ui: ApplicationUI,
+    command_keys: Rc<CommandKeys>,
     quit: bool,
 }
 
 impl Application {
     pub fn new() -> Self {
+        let command_keys = Rc::new(CommandKeys::default());
+
         Application {
-            ui: ApplicationUI::new(),
+            ui: ApplicationUI::new(Rc::clone(&command_keys)),
+            command_keys: Rc::clone(&command_keys),
             quit: false,
         }
     }
@@ -28,16 +32,15 @@ impl Application {
 impl BaseComponent for Application {
     fn event(&mut self, event: Event) -> Result<bool, ()> {
         if let Event::Key(ke) = event {
-            return match ke.code {
-                KeyCode::Char('c') if ke.modifiers.contains(KeyModifiers::CONTROL) => {
-                    self.quit = true;
-                    Ok(true)
-                },
-                _ => self.ui.event(event)
+            return if ke == self.command_keys.quit {
+                self.quit = true;
+                Ok(true)
+            } else {
+                self.ui.event(event)
             }
         }
 
-        Ok(true)
+        Ok(false)
     }
 }
 

@@ -1,6 +1,5 @@
-use crossterm::event::{
-    Event, KeyCode, KeyModifiers, KeyEvent
-};
+use std::rc::Rc;
+use crossterm::event::Event;
 use tui::backend::Backend;
 use tui::Frame;
 use tui::layout::{
@@ -15,21 +14,22 @@ use crate::{
         BaseComponent, DrawableComponent, Command,
         text_input::TextInput
     },
-    common
+    common::{ self, command_keys::CommandKeys }
 };
 
 pub struct UserRegistration {
     name: TextInput,
     userid: TextInput,
+    command_keys: Rc<CommandKeys>,
     focus: bool
 }
 
 impl UserRegistration {
-    pub fn new() -> Self {
-        Self::edit(String::new())
+    pub fn new(command_keys: Rc<CommandKeys>) -> Self {
+        Self::edit(command_keys, String::new())
     }
 
-    pub fn edit(text: String) -> Self {
+    pub fn edit(command_keys: Rc<CommandKeys>, text: String) -> Self {
         let mut name = TextInput::with(
             text,
             "Enter name...".to_string(),
@@ -44,6 +44,7 @@ impl UserRegistration {
         UserRegistration {
             name,
             userid,
+            command_keys: Rc::clone(&command_keys),
             focus: true
         }
     }
@@ -65,6 +66,7 @@ impl UserRegistration {
     }
 
     fn set_next_user_id(&mut self) {
+        self.userid.clear();
         self.userid.set_text(Self::get_next_name());
     }
 }
@@ -76,34 +78,27 @@ impl BaseComponent for UserRegistration {
         }
 
         if let Event::Key(ke) = event {
-            match ke.code {
-                KeyCode::Tab => {
-                    self.focus_next();
+            return if ke == self.command_keys.focus_next {
+                self.focus_next();
 
-                    return Ok(true);
-                },
-                KeyCode::Char(c) if ke.modifiers.contains(KeyModifiers::CONTROL) => {
-                    // TODO Remove hardcoding, map short keys
-                    if c == 'r' || c == 'R' {
-                        if self.name.is_focus() {
-                            self.name.clear();
-                        } else {
-                            self.userid.clear();
-                        }
+                Ok(true)
+            } else if ke == self.command_keys.clear {
+                if self.name.is_focus() {
+                    self.name.clear();
+                } else {
+                    self.userid.clear();
+                }
 
-                        return Ok(true);
-                    } else if (c == 'n' || c == 'N') && self.userid.is_focus() {
-                        self.set_next_user_id();
+                Ok(true)
+            } else if ke == self.command_keys.next {
+                self.set_next_user_id();
 
-                        return Ok(true);
-                    }
-                },
-                _ => {
-                    return if self.name.is_focus() {
-                        self.name.event(event)
-                    } else {
-                        self.userid.event(event)
-                    }
+                Ok(true)
+            } else {
+                if self.name.is_focus() {
+                    self.name.event(event)
+                } else {
+                    self.userid.event(event)
                 }
             }
         }
@@ -170,33 +165,23 @@ impl DrawableComponent for UserRegistration {
         let mut commands = Vec::new();
 
         commands.push(Command {
-            label: "Move Focus [⇥]".to_string(),
-            shortcut: KeyEvent::new(KeyCode::Tab, KeyModifiers::CONTROL),
+            label: "Focus Next [⇥]".to_string(),
             enable: true
         });
 
         commands.push(Command {
             label: "Clear [^r]".to_string(),
-            shortcut: KeyEvent::new(KeyCode::Char('r'), KeyModifiers::CONTROL),
             enable: true
         });
 
         commands.push(Command {
             label: "Next [^n]".to_string(),
-            shortcut: KeyEvent::new(KeyCode::Char('n'), KeyModifiers::CONTROL),
             enable: self.userid.is_focus()
         });
 
         commands.push(Command {
             label: "Save [⏎]".to_string(),
-            shortcut: KeyEvent::new(KeyCode::Char('n'), KeyModifiers::CONTROL),
             enable: false
-        });
-
-        commands.push(Command {
-            label: "Quit [^c]".to_string(),
-            shortcut: KeyEvent::new(KeyCode::Char('c'), KeyModifiers::CONTROL),
-            enable: true
         });
 
         commands

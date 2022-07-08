@@ -1,8 +1,11 @@
+pub mod command_keys;
+
 use tui::{
     layout::{ Rect, Layout, Direction }
 };
 use tui::layout::Constraint;
 
+#[allow(unused)]
 pub fn get_center_rect(percent_x: u16, percent_y: u16, area: Rect) -> Rect {
     let ver_layout = Layout::default()
         .direction(Direction::Vertical)
