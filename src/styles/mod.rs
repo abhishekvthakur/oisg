@@ -1,6 +1,4 @@
-use tui::style::{
-    Color, Style
-};
+use tui::style::{Color, Modifier, Style};
 
 pub fn cursor_style(focus: bool) -> Style {
     if !focus {
@@ -31,4 +29,10 @@ pub fn command_style(enable: bool) -> Style {
             true =>Color::White,
             false => Color::Rgb(90, 90, 90)
         })
+}
+
+pub fn error_msg_style() -> Style {
+    Style::default()
+        .fg(Color::Red)
+        .add_modifier(Modifier::BOLD | Modifier::RAPID_BLINK)
 }

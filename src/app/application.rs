@@ -40,6 +40,10 @@ impl BaseComponent for Application {
             }
         }
 
+        if let Event::Resize(_, _) = event {
+            return Ok(true);
+        }
+
         Ok(false)
     }
 }

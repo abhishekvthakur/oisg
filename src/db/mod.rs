@@ -1,7 +1,10 @@
 pub mod tables;
+pub mod operations;
 
 use std::io;
 use home;
+
+use sqlite;
 
 use crate::constants;
 
@@ -37,4 +40,18 @@ fn get_db_path() -> io::Result<(String, String)> {
 
     let dir_path = format!("{}/.{}", home_dir.display(), constants::APP_NAME);
     Ok((String::from(&dir_path), format!("{}/{}", dir_path, constants::DB_FILE_NAME)))
+}
+
+fn get_connection() -> io::Result<sqlite::Connection> {
+    let (_, db_path) = get_db_path()?;
+    let connection = match sqlite::open(db_path) {
+        Ok(conn) => conn,
+        Err(e) => {
+            return Err(io::Error::new(
+                io::ErrorKind::Other, e.message.unwrap()
+            ));
+        }
+    };
+
+    Ok(connection)
 }

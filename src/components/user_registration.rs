@@ -1,3 +1,4 @@
+use std::io;
 use std::rc::Rc;
 use crossterm::event::Event;
 use tui::backend::Backend;
@@ -14,14 +15,17 @@ use crate::{
         BaseComponent, DrawableComponent, Command,
         text_input::TextInput
     },
-    common::{ self, command_keys::CommandKeys }
+    common::{ self, command_keys::CommandKeys },
+    styles,
+    db
 };
 
 pub struct UserRegistration {
     name: TextInput,
     userid: TextInput,
     command_keys: Rc<CommandKeys>,
-    focus: bool
+    focus: bool,
+    err_msg: Option<String>
 }
 
 impl UserRegistration {
@@ -45,6 +49,7 @@ impl UserRegistration {
             name,
             userid,
             command_keys: Rc::clone(&command_keys),
+            err_msg: Some("Please enter name".to_string()),
             focus: true
         }
     }
@@ -69,6 +74,29 @@ impl UserRegistration {
         self.userid.clear();
         self.userid.set_text(Self::get_next_name());
     }
+
+    fn validate_fields(&mut self) {
+        let name_text = self.name.get_text();
+        let userid_text = self.userid.get_text();
+
+        if name_text.trim().len() > 0 && userid_text.trim().len() > 0 {
+            self.err_msg = None;
+            return;
+        }
+
+        if name_text.trim().len() == 0 {
+            self.err_msg = Some("Please enter name".to_string());
+        } else if userid_text.trim().len() == 0 {
+            self.err_msg = Some("Please enter userid".to_string());
+        }
+    }
+
+    fn save_user_details(&self) -> io::Result<()> {
+        db::operations::save_user_details(
+            self.name.get_text().to_string(),
+            self.userid.get_text().to_string()
+        )
+    }
 }
 
 impl BaseComponent for UserRegistration {
@@ -89,16 +117,35 @@ impl BaseComponent for UserRegistration {
                     self.userid.clear();
                 }
 
+                self.validate_fields();
                 Ok(true)
             } else if ke == self.command_keys.next {
                 self.set_next_user_id();
 
+                self.validate_fields();
+                Ok(true)
+            } else if ke == self.command_keys.save {
+                if self.err_msg == None {
+                    return match self.save_user_details() {
+                        Ok(_) => Ok(true),
+                        Err(_) => Err(())
+                    }
+                }
+
                 Ok(true)
             } else {
-                if self.name.is_focus() {
+                let result = if self.name.is_focus() {
                     self.name.event(event)
                 } else {
                     self.userid.event(event)
+                };
+
+                return match result {
+                    Ok(consumed) if consumed => {
+                        self.validate_fields();
+                        Ok(true)
+                    },
+                    _ => Ok(false)
                 }
             }
         }
@@ -122,12 +169,19 @@ impl DrawableComponent for UserRegistration {
             .borders(Borders::ALL)
             .border_type(BorderType::Thick);
 
-        let center_area = common::get_center_rect_absolute(70, 5, area);
+        let mut center_area = common::get_center_rect_absolute(70, 6, area);
+        if self.err_msg == None {
+            center_area = Rect::new(
+                center_area.x, center_area.y,
+                center_area.width, center_area.height.saturating_sub(1)
+            )
+        }
         let inner_area = block.inner(center_area);
 
         let ver_layout = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
+                Constraint::Length(1),
                 Constraint::Length(1),
                 Constraint::Length(1),
                 Constraint::Length(1),
@@ -159,6 +213,15 @@ impl DrawableComponent for UserRegistration {
 
         self.name.draw(f, hor_layout_1[1]);
         self.userid.draw(f, hor_layout_2[1]);
+
+        if let Some(err_message) = &self.err_msg {
+            f.render_widget(
+                Paragraph::new(err_message.as_str()).style(styles::error_msg_style()),
+                ver_layout[3]
+            );
+        } else {
+            f.render_widget(Clear, ver_layout[3]);
+        }
     }
 
     fn get_commands(&self) -> Vec<Command> {
@@ -181,7 +244,7 @@ impl DrawableComponent for UserRegistration {
 
         commands.push(Command {
             label: "Save [⏎]".to_string(),
-            enable: false
+            enable: self.err_msg == None
         });
 
         commands
