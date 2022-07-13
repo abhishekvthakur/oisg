@@ -35,13 +35,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     terminal.hide_cursor()?;
     terminal.clear()?;
 
-    if !db::is_db_exists()? {
+    let is_db_exists = db::is_db_exists()?;
+    if !is_db_exists {
         db::create_db_file()?;
         db::tables::create_all()?;
     }
 
     // create application
-    let mut application = app::application::Application::new();
+    let mut application = app::application::Application::new(!is_db_exists);
 
     let tick_rate = Duration::from_millis(200);
     let last_tick = Instant::now();

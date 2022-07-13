@@ -1,24 +1,44 @@
+use std::cell::RefCell;
 use std::rc::Rc;
 use crossterm::event::Event;
-use tui::backend::Backend;
-use tui::Frame;
-use tui::layout::Rect;
-use crate::app::application_ui::ApplicationUI;
-use crate::components::{ BaseComponent, DrawableComponent };
-use crate::common::command_keys::CommandKeys;
+use tui::{
+    backend::Backend,
+    Frame,
+    layout::{
+        Layout, Constraint, Direction, Rect
+    }
+};
+use crate::{
+    app::application_ui::ApplicationUI,
+    components::{
+        BaseComponent, Command, DrawableComponent
+    },
+    common::command_keys::CommandKeys,
+    components::command::CommandComponent,
+    components::user_registration::UserRegistration,
+};
 
 pub struct Application {
     ui: ApplicationUI,
+    command: CommandComponent,
+    user_registration: Option<RefCell<UserRegistration>>,
     command_keys: Rc<CommandKeys>,
     quit: bool,
 }
 
 impl Application {
-    pub fn new() -> Self {
+    pub fn new(first_time: bool) -> Self {
         let command_keys = Rc::new(CommandKeys::default());
+        let user_registration = if first_time {
+            Some(RefCell::new(UserRegistration::new(Rc::clone(&command_keys))))
+        } else {
+            None
+        };
 
         Application {
             ui: ApplicationUI::new(Rc::clone(&command_keys)),
+            command: CommandComponent::new(),
+            user_registration,
             command_keys: Rc::clone(&command_keys),
             quit: false,
         }
@@ -26,6 +46,17 @@ impl Application {
 
     pub fn is_quit(&self) -> bool {
         self.quit
+    }
+
+    fn get_common_commands(&self) -> Vec<Command> {
+        let mut commands = Vec::new();
+
+        commands.push(Command {
+            label: "Quit [^c]".to_string(),
+            enable: true
+        });
+
+        commands
     }
 }
 
@@ -36,7 +67,14 @@ impl BaseComponent for Application {
                 self.quit = true;
                 Ok(true)
             } else {
-                self.ui.event(event)
+                match &self.user_registration {
+                    None => {
+                        self.ui.event(event)
+                    }
+                    Some(user_registration) => {
+                        user_registration.borrow_mut().event(event)
+                    }
+                }
             }
         }
 
@@ -50,6 +88,29 @@ impl BaseComponent for Application {
 
 impl DrawableComponent for Application {
     fn draw<B: Backend>(&mut self, f: &mut Frame<B>, area: Rect) {
-        self.ui.draw(f, area);
+        let layout = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Min(2),
+                Constraint::Length(1),
+            ].as_ref())
+            .split(area);
+
+        let mut commands = Vec::new();
+        commands.append(&mut self.get_common_commands());
+
+        match &self.user_registration {
+            None => {
+                self.ui.draw(f, layout[0]);
+                commands.append(&mut self.ui.get_commands());
+            }
+            Some(user_registration) => {
+                user_registration.borrow_mut().draw(f, layout[0]);
+                commands.append(&mut user_registration.borrow().get_commands());
+            }
+        };
+
+        self.command.update_commands(commands);
+        self.command.draw(f, layout[1]);
     }
 }
