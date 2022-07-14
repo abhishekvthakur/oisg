@@ -16,6 +16,7 @@ use crate::{
     common::command_keys::CommandKeys,
     components::command::CommandComponent,
     components::user_registration::UserRegistration,
+    db::models::UserInfo,
 };
 
 pub struct Application {
@@ -27,16 +28,22 @@ pub struct Application {
 }
 
 impl Application {
-    pub fn new(first_time: bool) -> Self {
+    pub fn new(user_info: Option<UserInfo>) -> Self {
         let command_keys = Rc::new(CommandKeys::default());
-        let user_registration = if first_time {
-            Some(RefCell::new(UserRegistration::new(Rc::clone(&command_keys))))
-        } else {
-            None
+        let user_registration = match user_info {
+            None => Some(RefCell::new(UserRegistration::new(Rc::clone(&command_keys)))),
+            Some(_) => None
         };
 
+        let user_info: Rc<UserInfo> = match user_info {
+            None => Rc::new(UserInfo::new()),
+            Some(ui) => Rc::new(ui),
+        };
         Application {
-            ui: ApplicationUI::new(Rc::clone(&command_keys)),
+            ui: ApplicationUI::new(
+                Rc::clone(&user_info),
+                Rc::clone(&command_keys)
+            ),
             command: CommandComponent::new(),
             user_registration,
             command_keys: Rc::clone(&command_keys),

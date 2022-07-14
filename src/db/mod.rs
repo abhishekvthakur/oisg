@@ -1,16 +1,24 @@
 pub mod tables;
 pub mod operations;
+pub mod models;
 
 use std::io;
+
 use home;
-
 use sqlite;
-
 use crate::constants;
 
-pub fn is_db_exists() -> io::Result<bool> {
-    let (_, db_path) = get_db_path()?;
+pub fn ensure_db_exists() -> io::Result<()> {
+    if !is_db_exists()? {
+        create_db_file()?;
+        tables::create_all()?;
+    }
 
+    Ok(())
+}
+
+fn is_db_exists() -> io::Result<bool> {
+    let (_, db_path) = get_db_path()?;
     Ok(std::path::Path::new(db_path.as_str()).exists())
 }
 

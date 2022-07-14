@@ -3,12 +3,12 @@
     "name": "USER_INFO",
     "columns": [
       {
-        "name": "USERNAME",
+        "name": "USER_NAME",
         "column_type": "VARCHAR(10)",
         "constraints": [ "NOT NULL" ]
       },
       {
-        "name": "USER_NAME",
+        "name": "USER_ID",
         "column_type": "VARCHAR(50)",
         "constraints": [ "NOT NULL" ]
       },
