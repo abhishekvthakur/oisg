@@ -14,6 +14,6 @@ Things to done
   - [x] : Add sqlite support for storing user details and other data locally
   - [x] : Add check if user has been registered on application start, if not registered display user_registration screen
   - [x] : Add help bar at bottom, with complete implementation
-  - [@] : Implement save functionality in user registration component
-  - [ ] : Create components for chat functionality
+  - [x] : Implement save functionality in user registration component
+  - [@] : Create components for chat functionality
 - [@] : Think next points...
