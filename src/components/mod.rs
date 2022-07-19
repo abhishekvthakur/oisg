@@ -3,17 +3,17 @@ pub mod text_input;
 pub mod user_registration;
 pub mod command;
 
-use crossterm::event::Event;
-use tui::backend::Backend;
-use tui::Frame;
-use tui::layout::Rect;
-
-// These traits borrowed from gitui
+use tui::{
+    backend::Backend,
+    Frame,
+    layout::Rect
+};
+use crate::common::app_event::AppEvent;
 
 /// `BaseComponent` trait defines the methods that should be
 /// declare in component
 pub trait BaseComponent {
-    fn event(&mut self, event: Event) -> Result<bool, ()>;
+    fn event(&mut self, event: AppEvent) -> Result<bool, ()>;
 
     fn set_focus(&mut self, focus: bool) {
         // unimplemented!()

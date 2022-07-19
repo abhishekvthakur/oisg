@@ -1,4 +1,5 @@
 pub mod command_keys;
+pub mod app_event;
 
 use tui::{
     layout::{ Rect, Layout, Direction }

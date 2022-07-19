@@ -1,13 +1,18 @@
-use std::io;
-use std::rc::Rc;
-use crossterm::event::Event;
-use tui::backend::Backend;
-use tui::Frame;
-use tui::layout::{
-    Constraint, Direction, Layout, Rect
+use std::{
+    io,
+    rc::Rc
 };
-use tui::widgets::{
-    Block, Borders, BorderType, Clear, Paragraph
+use crossterm::event::Event;
+use crossbeam_channel::Sender;
+use tui::{
+    backend::Backend,
+    Frame,
+    layout::{
+        Constraint, Direction, Layout, Rect
+    },
+    widgets::{
+        Block, Borders, BorderType, Clear, Paragraph
+    }
 };
 use names;
 use crate::{
@@ -15,7 +20,11 @@ use crate::{
         BaseComponent, DrawableComponent, Command,
         text_input::TextInput
     },
-    common::{ self, command_keys::CommandKeys },
+    common::{
+        self,
+        command_keys::CommandKeys,
+        app_event::{ AppEvent, Notification }
+    },
     styles,
     db
 };
@@ -24,16 +33,28 @@ pub struct UserRegistration {
     name: TextInput,
     userid: TextInput,
     command_keys: Rc<CommandKeys>,
+    tx_notification: Sender<AppEvent>,
     focus: bool,
     err_msg: Option<String>
 }
 
 impl UserRegistration {
-    pub fn new(command_keys: Rc<CommandKeys>) -> Self {
-        Self::edit(command_keys, String::new())
+    pub fn new(
+        command_keys: Rc<CommandKeys>,
+        tx_notification: Sender<AppEvent>
+    ) -> Self {
+        Self::edit(
+            command_keys,
+            String::new(),
+            tx_notification
+        )
     }
 
-    pub fn edit(command_keys: Rc<CommandKeys>, text: String) -> Self {
+    pub fn edit(
+        command_keys: Rc<CommandKeys>,
+        text: String,
+        tx_notification: Sender<AppEvent>
+    ) -> Self {
         let mut name = TextInput::with(
             text,
             "Enter name...".to_string(),
@@ -49,6 +70,7 @@ impl UserRegistration {
             name,
             userid,
             command_keys: Rc::clone(&command_keys),
+            tx_notification,
             err_msg: Some("Please enter name".to_string()),
             focus: true
         }
@@ -100,52 +122,59 @@ impl UserRegistration {
 }
 
 impl BaseComponent for UserRegistration {
-    fn event(&mut self, event: Event) -> Result<bool, ()> {
+    fn event(&mut self, event: AppEvent) -> Result<bool, ()> {
         if !self.focus {
             return Ok(false);
         }
 
-        if let Event::Key(ke) = event {
-            return if ke == self.command_keys.focus_next {
-                self.focus_next();
+        if let AppEvent::InputEvent(evt) = event {
+            if let Event::Key(ke) = evt {
+                return if ke == self.command_keys.focus_next {
+                    self.focus_next();
 
-                Ok(true)
-            } else if ke == self.command_keys.clear {
-                if self.name.is_focus() {
-                    self.name.clear();
-                } else {
-                    self.userid.clear();
-                }
-
-                self.validate_fields();
-                Ok(true)
-            } else if ke == self.command_keys.next {
-                self.set_next_user_id();
-
-                self.validate_fields();
-                Ok(true)
-            } else if ke == self.command_keys.save {
-                if self.err_msg == None {
-                    return match self.save_user_details() {
-                        Ok(_) => Ok(true),
-                        Err(_) => Err(())
+                    Ok(true)
+                } else if ke == self.command_keys.clear {
+                    if self.name.is_focus() {
+                        self.name.clear();
+                    } else {
+                        self.userid.clear();
                     }
-                }
 
-                Ok(true)
-            } else {
-                let result = if self.name.is_focus() {
-                    self.name.event(event)
+                    self.validate_fields();
+                    Ok(true)
+                } else if ke == self.command_keys.next {
+                    self.set_next_user_id();
+
+                    self.validate_fields();
+                    Ok(true)
+                } else if ke == self.command_keys.save {
+                    if self.err_msg == None {
+                        return match self.save_user_details() {
+                            Ok(_) => {
+                                let event = AppEvent::NotificationEvent(Notification::UserInfoSaved);
+                                let _ = self.tx_notification.send(event);
+
+                                Ok(true)
+                            },
+                            Err(_) => Err(())
+                        }
+                    }
+
+                    Ok(true)
                 } else {
-                    self.userid.event(event)
-                };
+                    let result = if self.name.is_focus() {
+                        self.name.event(event)
+                    } else {
+                        self.userid.event(event)
+                    };
 
-                return match result {
-                    Ok(consumed) if consumed => {
-                        self.validate_fields();
-                        Ok(true)
-                    },
-                    _ => Ok(false)
+                    return match result {
+                        Ok(consumed) if consumed => {
+                            self.validate_fields();
+                            Ok(true)
+                        },
+                        _ => Ok(false)
+                    }
                 }
             }
         }

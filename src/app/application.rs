@@ -1,6 +1,9 @@
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::{
+    cell::RefCell,
+    rc::Rc,
+};
 use crossterm::event::Event;
+use crossbeam_channel::Sender;
 use tui::{
     backend::Backend,
     Frame,
@@ -13,11 +16,18 @@ use crate::{
     components::{
         BaseComponent, Command, DrawableComponent
     },
-    common::command_keys::CommandKeys,
+    common::{
+        command_keys::CommandKeys,
+        app_event::AppEvent,
+    },
     components::command::CommandComponent,
     components::user_registration::UserRegistration,
-    db::models::UserInfo,
+    db::{
+        self,
+        models::UserInfo
+    },
 };
+use crate::common::app_event::Notification;
 
 pub struct Application {
     ui: ApplicationUI,
@@ -28,10 +38,15 @@ pub struct Application {
 }
 
 impl Application {
-    pub fn new(user_info: Option<UserInfo>) -> Self {
+    pub fn new(
+        user_info: Option<UserInfo>, tx_notification: Sender<AppEvent>
+    ) -> Self {
         let command_keys = Rc::new(CommandKeys::default());
         let user_registration = match user_info {
-            None => Some(RefCell::new(UserRegistration::new(Rc::clone(&command_keys)))),
+            None => Some(RefCell::new(UserRegistration::new(
+                Rc::clone(&command_keys),
+                tx_notification.clone()
+            ))),
             Some(_) => None
         };
 
@@ -42,7 +57,7 @@ impl Application {
         Application {
             ui: ApplicationUI::new(
                 Rc::clone(&user_info),
-                Rc::clone(&command_keys)
+                Rc::clone(&command_keys),
             ),
             command: CommandComponent::new(),
             user_registration,
@@ -65,28 +80,43 @@ impl Application {
 
         commands
     }
+
+    pub fn disable_user_registration(&mut self) {
+        self.user_registration = None;
+    }
 }
 
 impl BaseComponent for Application {
-    fn event(&mut self, event: Event) -> Result<bool, ()> {
-        if let Event::Key(ke) = event {
-            return if ke == self.command_keys.quit {
-                self.quit = true;
-                Ok(true)
-            } else {
-                match &self.user_registration {
-                    None => {
-                        self.ui.event(event)
-                    }
-                    Some(user_registration) => {
-                        user_registration.borrow_mut().event(event)
+    fn event(&mut self, event: AppEvent) -> Result<bool, ()> {
+        if let AppEvent::NotificationEvent(notification) = event {
+            return match notification {
+                Notification::UserInfoSaved => {
+                    self.user_registration = None;
+                    let user_info = db::operations::get_user_info().unwrap().unwrap();
+                    self.ui.set_user_info(Rc::new(user_info));
+
+                    Ok(true)
+                }
+                _ => Ok(false)
+            }
+        } else if let AppEvent::InputEvent(evt) = event {
+            if let Event::Key(ke) = evt {
+                return if ke == self.command_keys.quit {
+                    self.quit = true;
+                    Ok(false)
+                } else {
+                    match &self.user_registration {
+                        None => {
+                            self.ui.event(event)
+                        }
+                        Some(user_registration) => {
+                            user_registration.borrow_mut().event(event)
+                        }
                     }
                 }
+            } else if let Event::Resize(_, _) = evt {
+                return Ok(true);
             }
-        }
-
-        if let Event::Resize(_, _) = event {
-            return Ok(true);
         }
 
         Ok(false)

@@ -1,14 +1,20 @@
-use crossterm::event::Event;
-use tui::backend::Backend;
-use tui::Frame;
-use tui::layout::Rect;
-use tui::text::{ Span, Spans };
-use tui::widgets::{ Paragraph };
-use crate::components::{
-    BaseComponent, DrawableComponent,
-    text_editor::TextEditor
+use tui::{
+    backend::Backend,
+    Frame,
+    layout::Rect,
+    text::{
+        Span, Spans
+    },
+    widgets::Paragraph
 };
-use crate::styles;
+use crate::{
+    styles,
+    components::{
+        BaseComponent, DrawableComponent,
+        text_editor::TextEditor
+    },
+    common::app_event::AppEvent
+};
 
 pub struct TextInput {
     editor: TextEditor,
@@ -93,7 +99,7 @@ impl TextInput {
 }
 
 impl BaseComponent for TextInput {
-    fn event(&mut self, event: Event) -> Result<bool, ()> {
+    fn event(&mut self, event: AppEvent) -> Result<bool, ()> {
         if !self.focus {
             return Ok(false);
         }

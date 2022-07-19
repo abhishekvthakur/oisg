@@ -1,3 +1,15 @@
-use std::collections::HashMap;
+pub struct UserInfo {
+    pub user_name: String,
+    pub user_id: String,
+    pub joined_at: String,
+}
 
-pub type UserInfo = HashMap<String, String>;
+impl UserInfo {
+    pub fn new() -> Self {
+        UserInfo {
+            user_name: String::new(),
+            user_id: String::new(),
+            joined_at: String::new(),
+        }
+    }
+}

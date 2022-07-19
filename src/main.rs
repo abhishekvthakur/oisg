@@ -8,7 +8,6 @@ mod db;
 use std::{
     error::Error,
     io,
-    time::{ Duration, Instant }
 };
 use crossterm::{
     ExecutableCommand,
@@ -16,13 +15,22 @@ use crossterm::{
         enable_raw_mode, disable_raw_mode,
         EnterAlternateScreen, LeaveAlternateScreen
     },
-    event
 };
 use tui::{
     backend::CrosstermBackend,
     terminal::Terminal
 };
-use crate::components::{ BaseComponent, DrawableComponent };
+use crossbeam_channel::{
+    Select, Receiver,
+    unbounded
+};
+use crate::{
+    components::{
+        BaseComponent, DrawableComponent
+    },
+    common::app_event::AppEvent,
+    app::event_receiver::EventReceiver
+};
 
 fn main() -> Result<(), Box<dyn Error>> {
     // ensuring db exists, if not create one
@@ -38,30 +46,42 @@ fn main() -> Result<(), Box<dyn Error>> {
     terminal.hide_cursor()?;
     terminal.clear()?;
 
+    let (tx_notification, rx_notification) = unbounded::<AppEvent>();
+    let event_receiver = EventReceiver::new();
+    let rx_input = event_receiver.receiver();
+
     // create application
-    let mut application = app::application::Application::new(db::operations::get_user_info()?);
+    let mut application = app::application::Application::new(
+        db::operations::get_user_info()?,
+        tx_notification
+    );
 
-    let tick_rate = Duration::from_millis(200);
-    let last_tick = Instant::now();
+    let mut first_draw = true;
 
-    terminal.draw(|f| application.draw(f, f.size()))?;
-
-    // wait for use to press any key
     loop {
-        let timeout = tick_rate
-            .checked_sub(last_tick.elapsed())
-            .unwrap_or_else(|| Duration::from_millis(0));
+        if first_draw {
+            terminal.draw(|f| application.draw(f, f.size()))?;
+            first_draw = false;
+            continue;
+        }
 
-        if event::poll(timeout)? {
-            match application.event(event::read()?) {
-                Ok(consumed) if consumed => {
-                    terminal.draw(|f| application.draw(f, f.size()))?;
-                },
-                Err(_) => {
+        let event = select_event([
+            &rx_input,
+            &rx_notification
+        ].as_ref())?;
 
-                }
-                _ => {}
+        // ignore if there is no event
+        if let AppEvent::None = event {
+            continue;
+        }
+
+        match application.event(event) {
+            Ok(consumed) if consumed => {
+                terminal.draw(|f| application.draw(f, f.size()))?;
+            },
+            Err(_) => {
             }
+            _ => {}
         }
 
         if application.is_quit() {
@@ -74,4 +94,19 @@ fn main() -> Result<(), Box<dyn Error>> {
     terminal.show_cursor()?;
 
     Ok(())
+}
+
+fn select_event(receivers: &[&Receiver<AppEvent>]) -> io::Result<AppEvent> {
+    let mut select = Select::new();
+    for receiver in receivers {
+        select.recv(receiver);
+    }
+
+    let operation = select.select();
+    let index = operation.index();
+
+    match operation.recv(&receivers[index]) {
+        Ok(evt) => Ok(evt),
+        Err(_) => Ok(AppEvent::None)
+    }
 }

@@ -1,43 +1,45 @@
 use std::rc::Rc;
-use crossterm::event::Event;
 use tui::{
     Frame,
     backend::Backend,
     layout::Rect,
     widgets::{
-        Block, Borders, BorderType
+        Block, Borders, BorderType, Paragraph
     }
 };
-use tui::widgets::Paragraph;
 use crate::{
-    common::command_keys::CommandKeys,
+    common::{
+        command_keys::CommandKeys,
+        app_event::AppEvent,
+    },
     components::{
         BaseComponent, DrawableComponent,
-        user_registration::UserRegistration,
     },
     db::models::UserInfo,
 };
 
 pub struct ApplicationUI {
-    user_info: Rc<UserInfo>,
-    user_reg: UserRegistration
+    user_info: Rc<UserInfo>
 }
 
 impl ApplicationUI {
     pub fn new(
         user_info: Rc<UserInfo>,
-        command_keys: Rc<CommandKeys>
+        _command_keys: Rc<CommandKeys>
     ) -> Self {
         ApplicationUI {
             user_info,
-            user_reg: UserRegistration::new(Rc::clone(&command_keys))
         }
+    }
+
+    pub fn set_user_info(&mut self, user_info: Rc<UserInfo>) {
+        self.user_info = Rc::clone(&user_info);
     }
 }
 
 impl BaseComponent for ApplicationUI {
-    fn event(&mut self, event: Event) -> Result<bool, ()> {
-        self.user_reg.event(event)
+    fn event(&mut self, event: AppEvent) -> Result<bool, ()> {
+        Ok(false)
     }
 }
 
@@ -50,8 +52,8 @@ impl DrawableComponent for ApplicationUI {
 
         let para = Paragraph::new(format!(
             "{}, {}",
-            self.user_info.get("USER_NAME").unwrap(),
-            self.user_info.get("USER_ID").unwrap(),
+            self.user_info.user_name,
+            self.user_info.user_id,
         )).block(block);
 
         f.render_widget(para, area);

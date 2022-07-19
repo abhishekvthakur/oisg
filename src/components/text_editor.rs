@@ -1,7 +1,10 @@
 use crossterm::event::{
     Event, KeyCode, KeyModifiers
 };
-use crate::BaseComponent;
+use crate::{
+    BaseComponent,
+    common::app_event::AppEvent
+};
 
 /// `TextEditor` is a non drawable component
 /// for handling text input operations
@@ -116,22 +119,25 @@ impl TextEditor {
 }
 
 impl BaseComponent for TextEditor {
-    fn event(&mut self, event: Event) -> Result<bool, ()> {
-        if let Event::Key(ke) = event {
-            return match ke.code {
-                KeyCode::Left => Ok(self.decr_cursor()),
-                KeyCode::Right => Ok(self.incr_cursor()),
-                KeyCode::Char(c) if !ke.modifiers.contains(KeyModifiers::CONTROL) => {
-                    self.insert(c);
-                    Ok(true)
-                },
-                KeyCode::Backspace => Ok(self.backspace()),
-                KeyCode::Home => Ok(self.home()),
-                KeyCode::End => Ok(self.end()),
-                KeyCode::Delete => Ok(self.delete()),
-                _ => Ok(false)
+    fn event(&mut self, event: AppEvent) -> Result<bool, ()> {
+        if let AppEvent::InputEvent(evt) = event {
+            if let Event::Key(ke) = evt {
+                return match ke.code {
+                    KeyCode::Left => Ok(self.decr_cursor()),
+                    KeyCode::Right => Ok(self.incr_cursor()),
+                    KeyCode::Char(c) if !ke.modifiers.contains(KeyModifiers::CONTROL) => {
+                        self.insert(c);
+                        Ok(true)
+                    },
+                    KeyCode::Backspace => Ok(self.backspace()),
+                    KeyCode::Home => Ok(self.home()),
+                    KeyCode::End => Ok(self.end()),
+                    KeyCode::Delete => Ok(self.delete()),
+                    _ => Ok(false)
+                }
             }
         }
+
 
         Ok(false)
     }
@@ -314,13 +320,13 @@ mod tests {
     fn test_left_right_event() {
         let mut text_editor = TextEditor::from(String::from("नमुना मजकूर"));
 
-        let ke_right = Event::Key(KeyEvent::from(KeyCode::Right));
+        let ke_right = AppEvent::InputEvent(Event::Key(KeyEvent::from(KeyCode::Right)));
         assert_eq!(text_editor.event(ke_right), Ok(true));
         assert_eq!(text_editor.event(ke_right), Ok(true));
 
         assert_eq!(text_editor.cur_pos, 6);
 
-        let ke_left = Event::Key(KeyEvent::from(KeyCode::Left));
+        let ke_left = AppEvent::InputEvent(Event::Key(KeyEvent::from(KeyCode::Left)));
         assert_eq!(text_editor.event(ke_left), Ok(true));
         assert_eq!(text_editor.cur_pos, 3);
 
@@ -336,7 +342,7 @@ mod tests {
 
         let hello = String::from("Hello");
         for c in hello.chars() {
-            let ke = Event::Key(KeyEvent::from(KeyCode::Char(c)));
+            let ke = AppEvent::InputEvent(Event::Key(KeyEvent::from(KeyCode::Char(c))));
 
             assert_eq!(text_editor.event(ke), Ok(true));
         }
@@ -349,10 +355,12 @@ mod tests {
     fn test_backspace_event() {
         let mut text_editor = TextEditor::from(String::from("Hello"));
 
-        let ke_backspace = Event::Key(KeyEvent::from(KeyCode::Backspace));
+        let ke_backspace = AppEvent::InputEvent(
+            Event::Key(KeyEvent::from(KeyCode::Backspace))
+        );
         assert_eq!(text_editor.event(ke_backspace), Ok(false));
 
-        let ke_home = Event::Key(KeyEvent::from(KeyCode::End));
+        let ke_home = AppEvent::InputEvent(Event::Key(KeyEvent::from(KeyCode::End)));
         assert_eq!(text_editor.event(ke_home), Ok(true));
         assert_eq!(text_editor.event(ke_backspace), Ok(true));
 
@@ -364,11 +372,11 @@ mod tests {
     fn test_home_end_event() {
         let mut text_editor = TextEditor::from(String::from("Hello"));
 
-        let ke_end = Event::Key(KeyEvent::from(KeyCode::End));
+        let ke_end = AppEvent::InputEvent(Event::Key(KeyEvent::from(KeyCode::End)));
         assert_eq!(text_editor.event(ke_end), Ok(true));
         assert_eq!(text_editor.cur_pos, 5);
 
-        let ke_home = Event::Key(KeyEvent::from(KeyCode::Home));
+        let ke_home = AppEvent::InputEvent(Event::Key(KeyEvent::from(KeyCode::Home)));
         assert_eq!(text_editor.event(ke_home), Ok(true));
         assert_eq!(text_editor.cur_pos, 0);
     }
@@ -377,11 +385,11 @@ mod tests {
     fn test_delete_event() {
         let mut text_editor = TextEditor::from(String::from("Hello"));
 
-        let ke_delete = Event::Key(KeyEvent::from(KeyCode::Delete));
+        let ke_delete = AppEvent::InputEvent(Event::Key(KeyEvent::from(KeyCode::Delete)));
         assert_eq!(text_editor.event(ke_delete), Ok(true));
         assert_eq!(text_editor.text, String::from("ello"));
 
-        let ke_right = Event::Key(KeyEvent::from(KeyCode::Right));
+        let ke_right = AppEvent::InputEvent(Event::Key(KeyEvent::from(KeyCode::Right)));
         assert_eq!(text_editor.event(ke_right), Ok(true));
         assert_eq!(text_editor.event(ke_right), Ok(true));
         assert_eq!(text_editor.event(ke_right), Ok(true));
@@ -393,13 +401,19 @@ mod tests {
     fn test_non_consumable_event() {
         let mut text_editor = TextEditor::from(String::from("Hello"));
 
-        let ke_ctrl = Event::Key(KeyEvent::new(KeyCode::Null, KeyModifiers::CONTROL));
+        let ke_ctrl = AppEvent::InputEvent(
+            Event::Key(KeyEvent::new(KeyCode::Null, KeyModifiers::CONTROL))
+        );
         assert_eq!(text_editor.event(ke_ctrl), Ok(false));
 
-        let ke_alt = Event::Key(KeyEvent::new(KeyCode::Null, KeyModifiers::ALT));
+        let ke_alt = AppEvent::InputEvent(
+            Event::Key(KeyEvent::new(KeyCode::Null, KeyModifiers::ALT))
+        );
         assert_eq!(text_editor.event(ke_alt), Ok(false));
 
-        let ke_shift = Event::Key(KeyEvent::new(KeyCode::Null, KeyModifiers::SHIFT));
+        let ke_shift = AppEvent::InputEvent(
+            Event::Key(KeyEvent::new(KeyCode::Null, KeyModifiers::SHIFT))
+        );
         assert_eq!(text_editor.event(ke_shift), Ok(false));
     }
 

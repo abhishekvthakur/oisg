@@ -5,21 +5,28 @@ use crate::db::{
     models
 };
 
-pub fn get_user_info<'a>() -> io::Result<Option<models::UserInfo>> {
+pub fn get_user_info() -> io::Result<Option<models::UserInfo>> {
     let connection = db::get_connection()?;
     let query = "SELECT USER_NAME, USER_ID, JOINED_AT FROM USER_INFO LIMIT 1";
 
+    let mut found = false;
     let mut res = models::UserInfo::new();
     let _ = connection.iterate(query, |pairs| {
         for &(col, val) in pairs.iter() {
-            res.insert(col.to_string(), val.unwrap().to_string());
+            found = true;
+            match col {
+                "USER_NAME" => res.user_name = val.unwrap().to_string(),
+                "USER_ID" => res.user_id = val.unwrap().to_string(),
+                "JOINED_AT" => res.joined_at = val.unwrap().to_string(),
+                _ => {}
+            }
         }
 
         false
     });
 
 
-    if res.len() > 0 {
+    if found {
         Ok(Some(res))
     } else {
         Ok(None)
