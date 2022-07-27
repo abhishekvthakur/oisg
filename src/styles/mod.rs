@@ -36,3 +36,24 @@ pub fn error_msg_style() -> Style {
         .fg(Color::Red)
         .add_modifier(Modifier::BOLD | Modifier::RAPID_BLINK)
 }
+
+pub fn user_name_style() -> Style {
+    Style::default()
+        .fg(Color::White)
+        .add_modifier(Modifier::BOLD)
+}
+
+pub fn user_id_style() -> Style {
+    Style::default()
+        .fg(Color::Gray)
+        .add_modifier(Modifier::BOLD)
+}
+
+pub fn border_style(focus: bool) -> Style {
+    Style::default()
+        .fg(if focus {
+            Color::White
+        } else {
+            Color::Gray
+        })
+}

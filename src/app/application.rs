@@ -23,7 +23,6 @@ use crate::{
     components::command::CommandComponent,
     components::user_registration::UserRegistration,
     db::{
-        self,
         models::UserInfo
     },
 };
@@ -51,7 +50,7 @@ impl Application {
         };
 
         let user_info: Rc<UserInfo> = match user_info {
-            None => Rc::new(UserInfo::new()),
+            None => Rc::new(UserInfo::default()),
             Some(ui) => Rc::new(ui),
         };
         Application {
@@ -91,9 +90,12 @@ impl BaseComponent for Application {
         if let AppEvent::NotificationEvent(notification) = event {
             return match notification {
                 Notification::UserInfoSaved => {
-                    self.user_registration = None;
-                    let user_info = db::operations::get_user_info().unwrap().unwrap();
-                    self.ui.set_user_info(Rc::new(user_info));
+                    if let Some(user_reg) = &self.user_registration {
+                        let user_info = user_reg.borrow().get_user_info();
+                        self.ui.set_user_info(Rc::new(user_info));
+
+                        self.user_registration = None;
+                    }
 
                     Ok(true)
                 }

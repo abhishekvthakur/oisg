@@ -23,10 +23,10 @@ use crate::{
     common::{
         self,
         command_keys::CommandKeys,
-        app_event::{ AppEvent, Notification }
+        app_event::{ AppEvent, Notification },
     },
     styles,
-    db
+    db::{ self, models::UserInfo }
 };
 
 pub struct UserRegistration {
@@ -60,11 +60,13 @@ impl UserRegistration {
             "Enter name...".to_string(),
         );
         name.set_focus(true);
+        name.set_display_focus(true);
 
-        let userid = TextInput::with(
+        let mut userid = TextInput::with(
             Self::get_next_name(),
             "Enter userid...".to_string()
         );
+        userid.set_display_focus(true);
 
         UserRegistration {
             name,
@@ -114,10 +116,16 @@ impl UserRegistration {
     }
 
     fn save_user_details(&self) -> io::Result<()> {
-        db::operations::save_user_details(
-            self.name.get_text().to_string(),
-            self.userid.get_text().to_string()
-        )
+        let user_info = self.get_user_info();
+        db::operations::save_user_details(user_info)
+    }
+
+    pub fn get_user_info(&self) -> UserInfo {
+        UserInfo {
+            user_name: self.name.get_text().to_string(),
+            user_id: self.userid.get_text().to_string(),
+            joined_at: "".to_string()
+        }
     }
 }
 

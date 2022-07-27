@@ -2,6 +2,7 @@ mod text_editor;
 pub mod text_input;
 pub mod user_registration;
 pub mod command;
+pub mod userinfo;
 
 use tui::{
     backend::Backend,

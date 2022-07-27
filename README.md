@@ -15,5 +15,6 @@ Things to done
   - [x] : Add check if user has been registered on application start, if not registered display user_registration screen
   - [x] : Add help bar at bottom, with complete implementation
   - [x] : Implement save functionality in user registration component
-  - [@] : Create components for chat functionality
+  - [x] : Create chat UI layout
+  - [@] : Implement conversation component... 
 - [@] : Think next points...

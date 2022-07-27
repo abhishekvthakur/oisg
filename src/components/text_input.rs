@@ -19,6 +19,7 @@ use crate::{
 pub struct TextInput {
     editor: TextEditor,
     placeholder: String,
+    display_focus: bool,
     focus: bool,
 }
 
@@ -31,6 +32,7 @@ impl TextInput {
         TextInput {
             editor: TextEditor::new(),
             placeholder,
+            display_focus: false,
             focus: false,
         }
     }
@@ -39,6 +41,7 @@ impl TextInput {
         TextInput {
             editor: TextEditor::from(text),
             placeholder: Self::default_placeholder(),
+            display_focus: false,
             focus: false,
         }
     }
@@ -47,6 +50,7 @@ impl TextInput {
         TextInput {
             editor: TextEditor::from(text),
             placeholder,
+            display_focus: false,
             focus: false,
         }
     }
@@ -61,6 +65,10 @@ impl TextInput {
 
     pub fn set_text(&mut self, text: String) {
         self.editor.text = text;
+    }
+
+    pub fn set_display_focus(&mut self, display_focus: bool) {
+        self.display_focus = display_focus;
     }
 
     pub fn clear(&mut self) {
@@ -121,11 +129,11 @@ impl DrawableComponent for TextInput {
         let paragraph = match self.get_draw_text() {
             Some(texts) => {
                 Paragraph::new(Spans::from(texts))
-                    .style(styles::input_style(self.focus, false))
+                    .style(styles::input_style(self.display_focus && self.focus, false))
             },
             None => {
                 Paragraph::new(Span::raw(self.placeholder.as_str()))
-                    .style(styles::input_style(self.focus, true))
+                    .style(styles::input_style(self.display_focus && self.focus, true))
             }
         };
 

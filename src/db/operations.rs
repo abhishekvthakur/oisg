@@ -10,7 +10,7 @@ pub fn get_user_info() -> io::Result<Option<models::UserInfo>> {
     let query = "SELECT USER_NAME, USER_ID, JOINED_AT FROM USER_INFO LIMIT 1";
 
     let mut found = false;
-    let mut res = models::UserInfo::new();
+    let mut res = models::UserInfo::default();
     let _ = connection.iterate(query, |pairs| {
         for &(col, val) in pairs.iter() {
             found = true;
@@ -33,13 +33,10 @@ pub fn get_user_info() -> io::Result<Option<models::UserInfo>> {
     }
 }
 
-pub fn save_user_details(
-    user_name: String,
-    user_id: String
-) -> io::Result<()> {
+pub fn save_user_details(user_info: models::UserInfo) -> io::Result<()> {
     let query = format!(
         "INSERT INTO USER_INFO (USER_NAME, USER_ID) VALUES ('{}', '{}')",
-        user_name, user_id
+        user_info.user_name, user_info.user_id
     );
 
     let connection = db::get_connection()?;

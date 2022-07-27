@@ -40,11 +40,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     enable_raw_mode()?;
     io::stdout().execute(EnterAlternateScreen)?;
 
-    // init terminal with backend
-    let backend = CrosstermBackend::new(io::stdout());
-    let mut terminal = Terminal::new(backend)?;
-    terminal.hide_cursor()?;
-    terminal.clear()?;
+    let mut terminal = setup_new_terminal(io::stdout())?;
 
     let (tx_notification, rx_notification) = unbounded::<AppEvent>();
     let event_receiver = EventReceiver::new();
@@ -96,6 +92,18 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+fn setup_new_terminal<W: io::Write>(
+    buffer: W
+) -> io::Result<Terminal<CrosstermBackend<W>>> {
+    let backend = CrosstermBackend::new(buffer);
+    let mut terminal = Terminal::new(backend)?;
+    terminal.hide_cursor()?;
+    terminal.clear()?;
+
+    Ok(terminal)
+}
+
+///
 fn select_event(receivers: &[&Receiver<AppEvent>]) -> io::Result<AppEvent> {
     let mut select = Select::new();
     for receiver in receivers {
