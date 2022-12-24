@@ -3,6 +3,7 @@ pub mod text_input;
 pub mod user_registration;
 pub mod command;
 pub mod userinfo;
+pub mod chat_area;
 
 use tui::{
     backend::Backend,

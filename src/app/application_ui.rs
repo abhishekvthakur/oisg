@@ -17,7 +17,8 @@ use crate::{
     components::{
         BaseComponent, DrawableComponent,
         userinfo::UserInfoComponent,
-        text_input::TextInput
+        text_input::TextInput,
+        chat_area::ChatArea
     },
     db::models::UserInfo,
     styles,
@@ -25,7 +26,8 @@ use crate::{
 
 pub struct ApplicationUI {
     user_info: Rc<UserInfo>,
-    message_input: TextInput
+    message_input: TextInput,
+    chat_area: ChatArea
 }
 
 impl ApplicationUI {
@@ -41,6 +43,7 @@ impl ApplicationUI {
         ApplicationUI {
             user_info,
             message_input,
+            chat_area: ChatArea::new()
         }
     }
 
@@ -99,12 +102,13 @@ impl DrawableComponent for ApplicationUI {
             .border_style(styles::border_style(false));
         f.render_widget(list, ver_split_1[1]);
 
-        let conversation = Block::default()
-            .title("Conversation")
-            .border_type(BorderType::Plain)
-            .borders(Borders::ALL)
-            .border_style(styles::border_style(false));
-        f.render_widget(conversation, ver_split_2[0]);
+        // let conversation = Block::default()
+        //     .title("Conversation")
+        //     .border_type(BorderType::Plain)
+        //     .borders(Borders::ALL)
+        //     .border_style(styles::border_style(false));
+        // f.render_widget(conversation, ver_split_2[0]);
+        self.chat_area.draw(f, ver_split_2[0]);
 
         let input = Block::default()
             .title("Input")

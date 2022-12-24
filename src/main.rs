@@ -4,6 +4,7 @@ mod styles;
 mod common;
 mod constants;
 mod db;
+mod net;
 
 use std::{
     error::Error,
