@@ -36,8 +36,11 @@ impl DrawableComponent for UserInfoComponent {
             .horizontal_margin(1)
             .split(area);
 
+        let user_icon = "";
+        let user_name_str = format!("{} {}", user_icon, self.user_info.user_name);
         let user_name = Paragraph::new(
-            self.user_info.user_name.as_str()
+            // self.user_info.user_name.as_str()
+            user_name_str
         ).style(styles::user_name_style());
         let user_id = Paragraph::new(
             self.user_info.user_id.as_str()
